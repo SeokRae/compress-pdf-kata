@@ -1,237 +1,135 @@
-# PDF 압축 프로젝트
+# PDF 압축 유틸리티
 
-이 프로젝트는 PDF 파일의 크기를 줄이는 다양한 압축 기능을 제공합니다. 객체지향적인 설계를 통해 확장성과 유지보수성이 좋은 구조로 구현되었으며, 품질 저하 없는 무손실 압축 기능을 포함합니다.
+이 라이브러리는 고품질을 유지하면서 PDF 파일 크기를 효과적으로 줄이는 유틸리티입니다. 다양한 압축 프로필을 제공하여 사용 목적에 따라 최적의 결과를 얻을 수 있습니다.
 
 ## 주요 기능
 
-- **다양한 PDF 압축 방식 지원**
-  - 무손실 압축 (품질 저하 없음, PNG 형식 기반)
-  - 구조 보존 최적화 압축 (텍스트 품질 유지, 이미지만 압축)
-  - 이미지 변환 기반 압축 (최대 압축률)
-- **압축 수준 조정**: LOW, MEDIUM, HIGH, EXTREME 압축 레벨 지원
-- **배치 처리**: 디렉토리 내 다중 파일 일괄 압축
-- **진행 상태 모니터링**: 옵저버 패턴을 통한 압축 과정 실시간 추적
+- 다양한 압축 프로필을 통한 맞춤형 PDF 압축
+- 이미지 해상도, 품질, DPI 조정을 통한 최적화
+- 메타데이터 최적화
+- 벤치마크 기능으로 압축 효율성 측정
+- 원본 파일 보존 (원본과 별도로 압축 파일 생성)
+- 배치 처리 지원 (여러 PDF 파일 일괄 압축)
 
-## 기술 스택
+## 압축 프로필
 
-- Java 21
-- Spring Boot 3.4.4
-- Apache PDFBox 3.0.3 (PDF 처리 라이브러리)
-- JUnit 5 & AssertJ (테스트)
-- Spring Core (의존성 주입, 설정 관리)
+라이브러리는 다양한 사용 사례에 맞게 최적화된 여러 압축 프로필을 제공합니다:
 
-## 압축 방식 비교
+| 프로필 | 이미지 품질 | 큰 이미지 품질 | 최대 DPI | 최소 DPI | 예상 압축률 | 품질 설명 |
+|-------|-----------|--------------|---------|---------|-----------|---------|
+| **MINIMUM_SIZE** | 0.65 | 0.6 | 300 | 72 | 85-95% | 낮은 품질, 웹 공유 및 화면 표시용 |
+| **SMALL_SIZE** | 0.85 | 0.75 | 450 | 120 | 70-80% | 적절한 품질, 텍스트 가독성 유지 |
+| **BALANCED** | 0.92 | 0.85 | 600 | 150 | 50-60% | 양호한 품질, 일반 용도로 충분 |
+| **TARGET_SIZE_200MB** | 0.95 | 0.90 | 800 | 180 | 33-40% | 좋은 품질, 300MB 파일을 약 200MB로 압축 |
+| **HIGH_QUALITY** | 0.98 | 0.95 | 900 | 200 | 30-40% | 매우 좋은 품질, 세밀한 부분에서만 약간의 차이 |
+| **MAXIMUM_QUALITY** | 1.0 | 0.99 | 1200 | 300 | 10-20% | 원본과 거의 동일한 품질, 육안으로 구분 불가 |
+| **ULTRA_HIGH_QUALITY** | 1.0 | 1.0 | 2400 | 600 | 5-10% | 원본보다 더 높은 해상도, 고품질 인쇄물 수준 |
+| **CUSTOM** | 사용자 정의 | 사용자 정의 | 사용자 정의 | 사용자 정의 | 설정에 따라 다름 | 사용자 정의 설정에 따라 결정됨 |
 
-| 압축 방식 | 특징 | 품질 | 압축률 | 적합한 사용 사례 |
-|---------|------|-----|-------|--------------|
-| **무손실 압축** | PDF 구조 유지, PNG 무손실 압축 사용 | 원본과 동일 | 낮음-중간 | 품질이 중요한 문서, 공식 문서 |
-| **구조 보존 최적화** | PDF 구조 유지, 이미지만 압축 | 텍스트 원본 유지, 이미지 약간 저하 | 중간-높음 | 일반 문서, 텍스트 위주 PDF |
-| **이미지 변환 압축** | 페이지를 이미지로 변환 후 압축 | 전체적으로 저하 | 매우 높음 | 보관용 문서, 웹 공유용 |
-
-## 설치 방법
-
-1. 저장소 클론: `git clone https://github.com/yourusername/compress-pdf-kata.git`
-2. 프로젝트 디렉토리로 이동: `cd compress-pdf-kata`
-3. 빌드: `./gradlew build`
-4. 실행: `./gradlew bootRun`
+기본 프로필은 `TARGET_SIZE_200MB`로 설정되어 있으며, 약 300MB 크기의 파일을 200MB 정도로 압축하는 것을 목표로 합니다.
 
 ## 사용 방법
 
-### 명령줄 인터페이스
-
-```bash
-# 단일 파일 압축 (기본값: 무손실 압축)
-java -jar pdf-compressor.jar compress input.pdf output.pdf MEDIUM
-
-# 압축 방식 지정
-java -jar pdf-compressor.jar compress input.pdf output.pdf HIGH --type=lossless
-java -jar pdf-compressor.jar compress input.pdf output.pdf MEDIUM --type=optimized
-java -jar pdf-compressor.jar compress input.pdf output.pdf LOW --type=image
-
-# 디렉토리 일괄 처리
-java -jar pdf-compressor.jar batch input-directory output-directory MEDIUM --type=lossless
-
-# 도움말 표시
-java -jar pdf-compressor.jar help
-```
-
-### 자바 코드에서 사용
+### 기본 압축
 
 ```java
-// 무손실 압축기 사용
-PdfCompressor compressor = new LosslessPdfCompressor();
-CompressionService service = new CompressionService(compressor);
-
-// 단일 파일 압축
+// 파일 압축 (기본 프로필 사용)
 File inputFile = new File("input.pdf");
-File outputFile = new File("compressed.pdf");
-CompressionResult result = service.compress(inputFile, outputFile, CompressionLevel.MEDIUM);
-
-// 압축 결과 확인
-System.out.println("원본 크기: " + result.getOriginalSize() + " bytes");
-System.out.println("압축 크기: " + result.getCompressedSize() + " bytes");
-System.out.println("압축률: " + result.getCompressionRatio() + "%");
-System.out.println("처리 시간: " + result.getProcessingTimeMs() + "ms");
+File outputFile = new File("output.pdf");
+PdfCompressionUtil.compressPdf(inputFile, outputFile);
 ```
 
-### 배치 처리 예제
+### 특정 프로필 사용
 
 ```java
-// 압축기 선택 (최적화, 무손실, 이미지 변환 중 택1)
-PdfCompressor compressor = new OptimizedPdfCompressor(); // 또는 LosslessPdfCompressor, ImageQualityCompressor
+// 고품질 프로필 사용
+PdfCompressionUtil.compressPdfWithProfile(
+    inputFile, 
+    outputFile, 
+    PdfCompressionUtil.CompressionProfile.HIGH_QUALITY
+);
 
-// 배치 프로세서 생성
-BatchProcessor batchProcessor = new BatchProcessor(new CompressionService(compressor));
-
-// 진행 상황 로거 등록
-batchProcessor.registerObserver(new CompressionProgressLogger());
-
-// 디렉토리 내 모든 PDF 압축
-File inputDir = new File("input-directory");
-File outputDir = new File("output-directory");
-batchProcessor.processBatch(inputDir, outputDir, CompressionLevel.HIGH);
+// 최소 크기 프로필 사용 (웹 공유용)
+PdfCompressionUtil.compressPdfWithProfile(
+    inputFile, 
+    outputFile, 
+    PdfCompressionUtil.CompressionProfile.MINIMUM_SIZE
+);
 ```
 
-### 설정 파일(application.properties)
-
-기본 압축 방식을 설정 파일에서 지정할 수 있습니다:
-
-```properties
-# 압축기 설정 (lossless, optimized, image)
-pdf.compressor.type=lossless
-```
-
-## 구현 아키텍처
-
-이 프로젝트는 다음과 같은 객체지향 설계 원칙을 따릅니다:
-
-- **단일 책임 원칙(SRP)**: 각 압축기 클래스는 특정 압축 방식에 집중
-- **개방-폐쇄 원칙(OCP)**: 새로운 압축 알고리즘은 기존 코드 수정 없이 추가 가능
-- **의존성 역전 원칙(DIP)**: 구체적인 구현보다 `PdfCompressor` 인터페이스에 의존
-
-### 주요 컴포넌트
-
-```
-com.example.pdf
-├── compressor
-│   ├── PdfCompressor.java           - 압축 인터페이스
-│   ├── LosslessPdfCompressor.java   - 무손실 압축 구현
-│   ├── OptimizedPdfCompressor.java  - 최적화 압축 구현 
-│   └── ImageQualityCompressor.java  - 이미지 변환 압축 구현
-├── model
-│   ├── CompressionLevel.java        - 압축 수준 열거형
-│   └── CompressionResult.java       - 압축 결과 모델
-├── service
-│   └── CompressionService.java      - 압축 서비스
-├── batch
-│   └── BatchProcessor.java          - 배치 처리 로직
-├── observer
-│   ├── CompressionObserver.java     - 옵저버 인터페이스
-│   └── CompressionProgressLogger.java - 로깅 구현체
-└── config
-    └── CompressorConfig.java        - 압축기 설정/선택 로직
-```
-
-## 테스트
-
-프로젝트는 다양한 테스트 케이스를 포함하고 있습니다:
-
-### 테스트 실행 방법
-
-```bash
-# 전체 테스트 실행
-./gradlew test
-
-# 특정 테스트 클래스만 실행
-./gradlew test --tests LosslessPdfCompressorTest
-./gradlew test --tests LosslessPdfCompressorRealFileTest
-```
-
-### 실제 파일 테스트
-
-실제 PDF 파일을 사용한 테스트 방법:
-
-1. `books` 디렉토리를 생성 (또는 이미 존재하는 디렉토리 사용)
-2. 테스트할 PDF 파일을 `books` 디렉토리에 복사
-3. `LosslessPdfCompressorRealFileTest` 테스트 클래스 실행
-4. 압축 결과는 `test-output` 디렉토리에 생성됨
+### 접미사가 붙은 압축 파일 생성
 
 ```java
-// LosslessPdfCompressorRealFileTest는 다음과 같은 테스트를 수행합니다:
-void testRealFileLosslessCompression() // 모든 PDF 파일에 대해 무손실 압축
-void testCompressionLevels()           // 다양한 압축 레벨 테스트
-void testComparisonWithOtherCompressors() // 다른 압축 방식과 비교
+// 원본 파일명에 "_압축" 접미사를 붙여 동일 폴더에 저장
+// 예: sample.pdf -> sample_압축.pdf
+PdfCompressionUtil.compressPdfWithPostfix(inputFile);
 ```
 
-#### 필요한 디렉토리 구조:
-```
-프로젝트 루트
-├── books/             - 원본 PDF 파일 위치
-│   ├── document1.pdf
-│   └── document2.pdf
-└── test-output/       - 압축 결과 저장 위치 (자동 생성)
-```
-
-### 자동 생성 테스트
-
-`RealPdfCompressionTest` 클래스는 테스트용 PDF 파일을 자동으로 생성하여 테스트합니다:
-
-- 텍스트만 포함된 PDF
-- 이미지만 포함된 PDF
-- 텍스트와 이미지가 모두 포함된 복합 PDF
-
-## 압축 방식 성능 비교
-
-실제 PDF 파일 테스트 결과에 기반한 압축률 비교:
-
-| 문서 유형 | 무손실 압축 | 구조 보존 최적화 | 이미지 변환 압축 |
-|---------|------------|--------------|--------------|
-| 텍스트 위주 | 5-15% | 15-30% | 50-70% |
-| 이미지 위주 | 20-40% | 50-80% | 70-90% |
-| 복합 문서 | 10-30% | 40-70% | 60-85% |
-
-### 압축 속도 비교 (1MB 문서 기준)
-- **무손실 압축**: 300-800ms
-- **구조 보존 최적화**: 500-1200ms
-- **이미지 변환 압축**: 1000-2500ms
-
-## 구현 세부사항
-
-### 무손실 압축 방식 구현
-`LosslessPdfCompressor`는 다음과 같은 방식으로 무손실 압축을 구현합니다:
-
-1. PDF 문서 구조를 그대로 유지
-2. 내부 이미지에 대해 LosslessFactory를 사용한 PNG 기반 무손실 압축 적용
-3. 텍스트, 벡터 그래픽 등 다른 요소는 수정하지 않음
-4. 불필요한 메타데이터 최적화
+### 사용자 정의 압축 설정
 
 ```java
-// 핵심 무손실 압축 로직
-PDImageXObject losslessImage = LosslessFactory.createFromImage(document, bufferedImage);
-resources.put(name, losslessImage);
+// 커스텀 압축 설정 사용
+PdfCompressionUtil.compressPdfWithCustomSettings(
+    inputFile,
+    outputFile,
+    0.95f,     // 이미지 품질
+    0.9f,      // 큰 이미지 품질
+    1000,      // 최대 DPI
+    200,       // 최소 DPI
+    5000000    // 무손실 압축 최대 픽셀 수
+);
 ```
 
-## 알려진 이슈 및 제한사항
+### 여러 파일 일괄 처리
 
-- 매우 복잡한 그래픽이 포함된 PDF 파일은 처리 시간이 길어질 수 있음
-- 암호화된 PDF 파일은 먼저 암호 해제 후 사용해야 함
-- PDFBox 3.0.3의 일부 기능이 완전히 안정화되지 않음
+```java
+// 여러 PDF 파일 일괄 압축
+File[] files = {
+    new File("file1.pdf"),
+    new File("file2.pdf"),
+    new File("file3.pdf")
+};
+Map<String, PdfCompressionUtil.CompressionResult> results = 
+    PdfCompressionUtil.compressMultipleFilesWithPostfix(files);
 
-## 향후 계획
+// 결과 확인
+for (Map.Entry<String, PdfCompressionUtil.CompressionResult> entry : results.entrySet()) {
+    PdfCompressionUtil.CompressionResult result = entry.getValue();
+    System.out.println(
+        entry.getKey() + ": " + 
+        result.getOriginalSize() + " -> " + 
+        result.getCompressedSize() + " (" + 
+        result.getCompressionRatio() + "%)"
+    );
+}
+```
 
-- 멀티스레드 병렬 처리 지원
-- 웹 인터페이스 추가
-- AI 기반 최적 압축 방식 자동 선택 기능
-- ICC 프로파일 최적화 기능 추가
+### 벤치마크 실행
 
-## 기여 방법
+```java
+// 디렉토리 내 모든 PDF 파일에 대한 압축 벤치마크 실행
+String inputDirectory = "/path/to/pdf/files";
+String outputDirectory = "/path/to/compressed/output";
+Map<String, PdfCompressionUtil.CompressionResult> benchmarkResults = 
+    PdfCompressionUtil.runBenchmark(inputDirectory, outputDirectory);
+```
 
-1. 저장소를 포크(Fork)합니다
-2. 기능 브랜치를 생성합니다 (`git checkout -b feature/amazing-feature`)
-3. 변경사항을 커밋합니다 (`git commit -m 'Add some amazing feature'`)
-4. 브랜치에 푸시합니다 (`git push origin feature/amazing-feature`)
-5. 풀 리퀘스트를 생성합니다
+## 시스템 요구사항
 
-## 라이센스
+- Java 11 이상
+- Apache PDFBox 3.0.1 이상
+- SLF4J (로깅용)
 
-MIT 
+## 메모리 고려사항
+
+대용량 PDF 파일이나 고해상도 이미지가 많은 PDF 파일을 처리할 때는 충분한 메모리를 할당해야 합니다. JVM 힙 크기를 조정하는 것이 좋습니다:
+
+```
+java -Xmx4g -jar your-application.jar
+```
+
+## 한계
+
+- 텍스트 기반 압축은 제한적입니다. 이 라이브러리는 주로 이미지가 많은 PDF 파일 압축에 최적화되어 있습니다.
+- 디지털 서명된 PDF는 압축 후 서명이 무효화될 수 있습니다.
+- PDF/A 규격 문서는 압축 후 규격을 만족하지 않을 수 있습니다.
