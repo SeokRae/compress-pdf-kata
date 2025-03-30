@@ -21,7 +21,7 @@ class PdfCompressionUtilTest {
     File outputFile = tempDir.resolve("compressed" + MEDIA_TYPE_PDF).toFile();
 
     // when
-    long compressedSize = PdfCompressionUtil.compressPdf(inputFile, outputFile);
+    long compressedSize = PdfCompressionUtil.compressPdf(inputFile, outputFile, PdfCompressionUtil.CompressionProfile.TARGET_SIZE_200MB);
 
     // then
     assertThat(outputFile).exists();
@@ -33,12 +33,12 @@ class PdfCompressionUtilTest {
   void compressPdf_ShouldReduceFileSize() throws IOException {
     // given
     String MEDIA_TYPE_PDF = ".pdf";
-    String fileName = "가상 면접 사례로 배우는 대규모 시스템 설계 기초2";
+    String fileName = "소프트웨어 설계의 정석";
     File inputFile = new File("src/test/resources/books/" + fileName + MEDIA_TYPE_PDF);
     File outputFile = new File("src/test/resources/books/" + fileName + "_압축" + MEDIA_TYPE_PDF);
 
     // when
-    long compressedSize = PdfCompressionUtil.compressPdf(inputFile, outputFile);
+    long compressedSize = PdfCompressionUtil.compressPdf(inputFile, outputFile, PdfCompressionUtil.CompressionProfile.VERY_LIGHT_COMPRESSION);
 
     // then
     assertThat(outputFile).exists();
