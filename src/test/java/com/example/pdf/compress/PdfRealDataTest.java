@@ -145,7 +145,7 @@ public class PdfRealDataTest {
         System.out.println("출력 디렉토리: " + splitOutputDir.getAbsolutePath());
         System.out.println("분할된 파일 수: " + splitFiles.length);
         System.out.println("처리 시간: " + (processingTime / 1000.0) + "초");
-        
+
         // 분할된 각 파일 정보 출력
         long totalSize = 0;
         for (File file : splitFiles) {

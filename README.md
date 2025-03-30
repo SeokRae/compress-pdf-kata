@@ -103,7 +103,7 @@ String summary = PdfFileManager.getSummary(pdfFile);
 테스트 실행:
 
 ```bash
-./mvnw test
+./gradlew test
 ```
 
 ## 라이선스
